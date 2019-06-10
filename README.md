@@ -337,7 +337,7 @@ react-native link react-native-code-push
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
-            new CodePush(getResources().getString(R.string.reactNativeCodePush_androidDeploymentKey), getApplicationContext(), BuildConfig.DEBUG, getResources().getString(R.string.reactNativeCodePush_androidServerURL))  //修改此行
+            new CodePush(getResources().getString(R.string.reactNativeCodePush_androidDeploymentKey), getApplicationContext(), BuildConfig.DEBUG, getResources().getString(R.string.reactNativeCodePush_androidServerURL))  //修改此行，最后添加一个参数
       );
     }
 ```
@@ -347,7 +347,7 @@ react-native link react-native-code-push
 <resources>
 	<string moduleConfig="true" name="reactNativeCodePush_androidDeploymentKey">C3gO8yp8SJcc1KddLpuYhBueYRBi4ksvOXqog</string>
     <string moduleConfig="true" name="reactNativeCodePush_androidServerURL">https://域名(:端口)/</string>  <!-- 此行为添加内容 -->
-    <string name="app_name">rndemo</string>
+    <string name="app_name">appName</string>
 </resources>
 ```
 
@@ -375,4 +375,41 @@ react-native link react-native-code-push
     SET GLOBAL pxc_strict_mode=PERMISSIVE;
     执行完sql后，恢复
     SET GLOBAL pxc_strict_mode=ENFORCING;
+```
+
+
+### 6.2 App无法连接CodePush服务器
+```
+解决方法：
+    使用https协议和域名访问
+
+    例(使用nginx代理)：
+    server {
+        listen       443 ssl http2 default_server;
+        listen       [::]:443 ssl http2 default_server;
+        server_name  _;
+        root         /usr/share/nginx/html;
+
+        ssl_certificate "/etc/nginx/ssl/xxx.cn-ca-bundle.crt";
+        ssl_certificate_key "/etc/nginx/ssl/xxx.cn.key";
+        ssl_session_cache shared:SSL:1m;
+        ssl_session_timeout  10m;
+        ssl_ciphers HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers on;
+
+        # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+
+        location / {
+                proxy_pass http://123.207.77.109:3000;
+        }
+        
+        error_page 404 /404.html;
+            location = /40x.html {
+        }
+
+        error_page 500 502 503 504 /50x.html;
+            location = /50x.html {
+        }
+    }
 ```
