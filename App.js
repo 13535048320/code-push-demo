@@ -79,7 +79,14 @@ class App extends Component<{}> {
   /** Update pops a confirmation dialog, and then immediately reboots the app */
   syncImmediate() {
     CodePush.sync(
-      { installMode: CodePush.InstallMode.IMMEDIATE, updateDialog: true },
+      {
+        // 更新安装时间
+        // CodePush.InstallMode.IMMEDIATE 立即安装并重启app
+        // CodePush.InstallMode.ON_NEXT_RESTART 下次启动app时安装
+        // CodePush.InstallMode.ON_NEXT_RESUME app从后台切换过来时安装
+        installMode: CodePush.InstallMode.IMMEDIATE,
+        updateDialog: true
+      },
       this.codePushStatusDidChange.bind(this),
       this.codePushDownloadDidProgress.bind(this)
     );
@@ -155,7 +162,13 @@ const styles = StyleSheet.create({
  * different check frequency, such as ON_APP_START, for a 'hands-off' approach where CodePush.sync() does not
  * need to be explicitly called. All options of CodePush.sync() are also available in this decorator.
  */
-let codePushOptions = { checkFrequency: CodePush.CheckFrequency.MANUAL };
+let codePushOptions = {
+    // 检查更新时间
+    // CodePush.CheckFrequency.MANUAL 手动检查更新
+    // CodePush.CheckFrequency.ON_APP_START 启动时检查更新
+    // CodePush.CheckFrequency.ON_APP_RESUME 从后台切换回前台时检查更新
+    checkFrequency: CodePush.CheckFrequency.MANUAL
+};
 
 App = CodePush(codePushOptions)(App);
 
