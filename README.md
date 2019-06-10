@@ -159,7 +159,9 @@ react-native link react-native-code-push
 ```
 
 ## 5. js中使用
-请参考本例子
+```
+请参考demo中的App.js
+```
 
 ## 6. 问题和解决方法
 ### 6.1 数据库问题
