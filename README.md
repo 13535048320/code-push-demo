@@ -1,0 +1,378 @@
+## 1. code-push-server搭建
+### 1.1 容器方式
+#### 1.1.1 拉取镜像
+```
+docker pull tablee/code-push-server:v0.5.2
+```
+
+#### 1.1.2 创建数据库codepush
+```
+SET GLOBAL pxc_strict_mode=PERMISSIVE;
+
+CREATE DATABASE IF NOT EXISTS `codepush`;
+
+GRANT SELECT,UPDATE,INSERT ON `codepush`.* TO 'codepush'@'%' IDENTIFIED BY '123456' WITH GRANT OPTION;
+
+flush privileges;
+
+use `codepush`;
+CREATE TABLE IF NOT EXISTS `apps` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL DEFAULT '',
+  `uid` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `os` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `platform` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `is_use_diff_text` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_name` (`name`(12))
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `collaborators` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `appid` int(10) unsigned NOT NULL DEFAULT '0',
+  `uid` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `roles` varchar(20) NOT NULL DEFAULT '',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_appid` (`appid`),
+  KEY `idx_uid` (`uid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE IF NOT EXISTS `deployments` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `appid` int(10) unsigned NOT NULL DEFAULT '0',
+  `name` varchar(20) NOT NULL DEFAULT '',
+  `description` varchar(500) NOT NULL DEFAULT '',
+  `deployment_key` varchar(64) NOT NULL,
+  `last_deployment_version_id` int(10) unsigned NOT NULL DEFAULT '0',
+  `label_id` int(11) unsigned NOT NULL DEFAULT '0',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_appid` (`appid`),
+  KEY `idx_deploymentkey` (`deployment_key`(40))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `deployments_history` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `deployment_id` int(11) unsigned NOT NULL DEFAULT '0',
+  `package_id` int(10) unsigned NOT NULL DEFAULT '0',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_deployment_id` (`deployment_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE IF NOT EXISTS `deployments_versions` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `deployment_id` int(11) unsigned NOT NULL DEFAULT '0',
+  `app_version` varchar(100) NOT NULL DEFAULT '',
+  `current_package_id` int(10) unsigned NOT NULL DEFAULT '0',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  `min_version` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `max_version` bigint(20) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  KEY `idx_did_minversion` (`deployment_id`,`min_version`),
+  KEY `idx_did_maxversion` (`deployment_id`,`max_version`),
+  KEY `idx_did_appversion` (`deployment_id`,`app_version`(30))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `packages` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `deployment_version_id` int(10) unsigned NOT NULL DEFAULT '0',
+  `deployment_id` int(10) unsigned NOT NULL DEFAULT '0',
+  `description` varchar(500) NOT NULL DEFAULT '',
+  `package_hash` varchar(64) NOT NULL DEFAULT '',
+  `blob_url` varchar(255) NOT NULL DEFAULT '',
+  `size` int(11) unsigned NOT NULL DEFAULT '0',
+  `manifest_blob_url` varchar(255) NOT NULL DEFAULT '',
+  `release_method` varchar(20) NOT NULL DEFAULT '',
+  `label` varchar(20) NOT NULL DEFAULT '',
+  `original_label` varchar(20) NOT NULL DEFAULT '',
+  `original_deployment` varchar(20) NOT NULL DEFAULT '',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `released_by` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `is_mandatory` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `is_disabled` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `rollout` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_deploymentid_label` (`deployment_id`,`label`(8)),
+  KEY `idx_versions_id` (`deployment_version_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `packages_diff` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `package_id` int(11) unsigned NOT NULL DEFAULT '0',
+  `diff_against_package_hash` varchar(64) NOT NULL DEFAULT '',
+  `diff_blob_url` varchar(255) NOT NULL DEFAULT '',
+  `diff_size` int(11) unsigned NOT NULL DEFAULT '0',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_packageid_hash` (`package_id`,`diff_against_package_hash`(40))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `packages_metrics` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `package_id` int(10) unsigned NOT NULL DEFAULT '0',
+  `active` int(10) unsigned NOT NULL DEFAULT '0',
+  `downloaded` int(10) unsigned NOT NULL DEFAULT '0',
+  `failed` int(10) unsigned NOT NULL DEFAULT '0',
+  `installed` int(10) unsigned NOT NULL DEFAULT '0',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_packageid` (`package_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `user_tokens` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `uid` bigint(20) unsigned NOT NULL DEFAULT '0',
+  `name` varchar(50) NOT NULL DEFAULT '',
+  `tokens` varchar(64) NOT NULL DEFAULT '',
+  `created_by` varchar(64) NOT NULL DEFAULT '',
+  `description` varchar(500) NOT NULL DEFAULT '',
+  `is_session` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `expires_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_uid` (`uid`),
+  KEY `idx_tokens` (`tokens`) KEY_BLOCK_SIZE=16
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` bigint(11) unsigned NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL DEFAULT '',
+  `password` varchar(255) NOT NULL DEFAULT '',
+  `email` varchar(100) NOT NULL DEFAULT '',
+  `identical` varchar(10) NOT NULL DEFAULT '',
+  `ack_code` varchar(10) NOT NULL DEFAULT '',
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `udx_identical` (`identical`),
+  KEY `udx_username` (`username`),
+  KEY `idx_email` (`email`) KEY_BLOCK_SIZE=20
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+INSERT INTO `users` (`id`, `username`, `password`, `email`, `identical`, `ack_code`, `updated_at`, `created_at`)
+VALUES
+	(1,'admin','$2a$12$mvUY9kTqW4kSoGuZFDW0sOSgKmNY8SPHVyVrSckBTLtXKf6vKX3W.','lisong2010@gmail.com','4ksvOXqog','oZmGE','2016-11-14 10:46:55','2016-02-29 21:24:49');
+
+
+CREATE TABLE IF NOT EXISTS `versions` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `type` tinyint(3) unsigned NOT NULL DEFAULT '0' COMMENT '1.DBversion',
+  `version` varchar(10) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `udx_type` (`type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+LOCK TABLES `versions` WRITE;
+INSERT INTO `versions` (`id`, `type`, `version`)
+VALUES
+	(1,1,'0.5.0');
+UNLOCK TABLES;
+
+CREATE TABLE IF NOT EXISTS `log_report_deploy` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `status` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `package_id` int(10) unsigned NOT NULL DEFAULT '0',
+  `client_unique_id` varchar(100) NOT NULL DEFAULT '',
+  `previous_label` varchar(20) NOT NULL DEFAULT '',
+  `previous_deployment_key` varchar(64) NOT NULL DEFAULT '',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `log_report_download` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `package_id` int(10) unsigned NOT NULL DEFAULT '0',
+  `client_unique_id` varchar(100) NOT NULL DEFAULT '',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+SET GLOBAL pxc_strict_mode=ENFORCING;
+
+```
+
+#### 1.1.3 启动容器
+```
+docker volume create code-push-storage
+
+docker run -d -p 3000:3000 \
+    --name code-push-server \
+    --restart always \
+    -e RDS_HOST=EXTERNAL_MYSQL_IP \
+    -e RDS_USERNAME=root \
+    -e RDS_PASSWORD=password \
+    -e RDS_PORT=3306 \
+    -e NODE_ENV=production \
+    -e STORAGE_DIR=/data/storage \
+    -e LOCAL_DOWNLOAD_URL=https://域名(:端口)/download \
+    -v code-push-storage:/data/storage \
+    tablee/code-push-server:v0.5.2
+
+RDS_HOST 为mysql服务IP
+RDS_USERNAME 为mysql帐号，默认为root，不使用-e RDS_USERNAME=XXX即使用默认
+RDS_PASSWORD 为mysql密码，默认为空
+RDS_PORT 为mysql端口，默认为3306
+LOCAL_DOWNLOAD_URL 修改为https://域名(:端口)/download，如果带端口必须与-p前一个端口一致
+另外，此处有一个坑，必须使用https协议和域名，否则，调试版本可以正常使用，但发布版本不能正常使用
+```
+
+### 1.2 普通安装方式
+
+#### 1.2.1 下载
+```
+git clone https://github.com/lisong/code-push-server.git
+```
+
+#### 1.2 安装
+```
+cd code-push-server
+npm install
+
+另外启动数据库并初始化
+./bin/db init --dbhost localhost --dbuser root --dbpassword passwd --dbport 3306 --skip_add_locks --skip-lock-tables
+```
+
+#### 1.3 配置
+```
+vi config/config.js
+
+修改mysql的ip、用户、密码和端口
+  db: {
+    username: process.env.RDS_USERNAME || "root",
+    password: process.env.RDS_PASSWORD || "abc123",
+    database: process.env.DATA_BASE || "codepush",
+    host: process.env.RDS_HOST || "172.16.106.00",
+    port: process.env.RDS_PORT || 3307,
+    dialect: "mysql",
+    logging: false,
+    operatorsAliases: false,
+  },
+  
+修改downloadUrl为本机IP,修改存储目录
+  local: {
+    // Binary files storage dir, Do not use tmpdir and it's public download dir.
+    storageDir: process.env.STORAGE_DIR || "/data/code-push",
+    // Binary files download host address which Code Push Server listen to. the files storage in storageDir.
+    downloadUrl: process.env.LOCAL_DOWNLOAD_URL || "https://域名(:端口)/download",  //必须使用https和域名
+    // public static download spacename.
+    public: '/download'
+  },
+
+创建存储目录
+mkdir -p /data/code-push
+```
+
+#### 1.4 启动
+```
+nohup ./bin/www &
+
+访问页面http://IP:3000
+
+登录
+用户admin
+密码123456
+
+复制token
+```
+
+## 2. code-push-cli
+### 2.1 安装
+```
+npm install -g code-push-cli
+```
+
+### 2.2 添加应用
+```
+登录server
+code-push login http://IP:3000
+
+输入token
+
+添加app
+code-push app add <appName> android react-native 
+
+保存key
+```
+
+## 3. react-native集成code-push
+### 3.1 安装组件
+```
+npm install react-native-code-push --save
+```
+
+### 3.2 添加依赖
+```
+react-native link react-native-code-push
+
+添加过程中会要求输入 2.2 中的Key
+
+输入后会卡在IOS处，直接Ctrl+C取消即可
+```
+
+### 3.3 修改MainApplication
+```
+    @Override
+    protected List<ReactPackage> getPackages() {
+      return Arrays.<ReactPackage>asList(
+          new MainReactPackage(),
+            new CodePush(getResources().getString(R.string.reactNativeCodePush_androidDeploymentKey), getApplicationContext(), BuildConfig.DEBUG, getResources().getString(R.string.reactNativeCodePush_androidServerURL))  //修改此行
+      );
+    }
+```
+
+### 3.4 修改app/src/main/res/values/strings.xml
+```
+<resources>
+	<string moduleConfig="true" name="reactNativeCodePush_androidDeploymentKey">C3gO8yp8SJcc1KddLpuYhBueYRBi4ksvOXqog</string>
+    <string moduleConfig="true" name="reactNativeCodePush_androidServerURL">https://域名(:端口)/</string>  <!-- 此行为添加内容 -->
+    <string name="app_name">rndemo</string>
+</resources>
+```
+
+## 4. 发布更新
+```
+测试版本：
+    code-push release-react <appName> android -t 1.0.0 --des "更新描述"
+生产版本：
+    code-push release-react <appName> android -t 1.0.0 -d Production --des "更新描述"
+强制更新：
+    最后加上参数 -m true
+```
+
+## 5. js中使用
+请参考本例子
+
+## 6. 问题和解决方法
+### 6.1 数据库问题
+```
+使用percona-xtradb-cluster问题
+错误： 
+    Percona-XtraDB-Cluster prohibits use of LOCK TABLE/FLUSH TABLE <table> WITH READ LOCK with pxc_strict_mode = ENFORCING
+
+解决方法：
+    SET GLOBAL pxc_strict_mode=PERMISSIVE;
+    执行完sql后，恢复
+    SET GLOBAL pxc_strict_mode=ENFORCING;
+```
