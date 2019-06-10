@@ -207,7 +207,7 @@ react-native link react-native-code-push
         include /etc/nginx/default.d/*.conf;
 
         location / {
-                proxy_pass http://123.207.77.109:3000;
+                proxy_pass http://YOUR_IP:3000;
         }
         
         error_page 404 /404.html;
