@@ -20,28 +20,28 @@ class App extends Component<{}> {
   codePushStatusDidChange(syncStatus) {
     switch(syncStatus) {
       case CodePush.SyncStatus.CHECKING_FOR_UPDATE:
-        this.setState({ syncMessage: "Checking for update." });
+        this.setState({ syncMessage: "检测更新中..." });
         break;
       case CodePush.SyncStatus.DOWNLOADING_PACKAGE:
-        this.setState({ syncMessage: "Downloading package." });
+        this.setState({ syncMessage: "下载更新中..." });
         break;
       case CodePush.SyncStatus.AWAITING_USER_ACTION:
-        this.setState({ syncMessage: "Awaiting user action." });
+        this.setState({ syncMessage: "等待用户动作中..." });
         break;
       case CodePush.SyncStatus.INSTALLING_UPDATE:
-        this.setState({ syncMessage: "Installing update." });
+        this.setState({ syncMessage: "安装更新中..." });
         break;
       case CodePush.SyncStatus.UP_TO_DATE:
-        this.setState({ syncMessage: "App up to date.", progress: false });
+        this.setState({ syncMessage: "已是最新版本.", progress: false });
         break;
       case CodePush.SyncStatus.UPDATE_IGNORED:
-        this.setState({ syncMessage: "Update cancelled by user.", progress: false });
+        this.setState({ syncMessage: "用户取消更新.", progress: false });
         break;
       case CodePush.SyncStatus.UPDATE_INSTALLED:
         this.setState({ syncMessage: "Update installed and will be applied on restart.", progress: false });
         break;
       case CodePush.SyncStatus.UNKNOWN_ERROR:
-        this.setState({ syncMessage: "An unknown error occurred.", progress: false });
+        this.setState({ syncMessage: "未知错误.", progress: false });
         break;
     }
   }
