@@ -326,7 +326,7 @@ npm install react-native-code-push --save
 ```
 react-native link react-native-code-push
 
-添加过程中会要求输入 2.2 中的Key
+添加过程中会要求输入 2.2 步骤中的Key
 
 输入后会卡在IOS处，直接Ctrl+C取消即可
 ```
