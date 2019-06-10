@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 
 import CodePush from "react-native-code-push";
-
+import Progress from './CusProgressBar'
+const {width, height} = Dimensions.get('window');
 class App extends Component<{}> {
   constructor() {
     super();
@@ -20,34 +21,44 @@ class App extends Component<{}> {
   codePushStatusDidChange(syncStatus) {
     switch(syncStatus) {
       case CodePush.SyncStatus.CHECKING_FOR_UPDATE:
-        this.setState({ syncMessage: "检测更新中..." });
+        this.setState({ modalVisible: true, syncMessage: "检测更新中..." });
         break;
       case CodePush.SyncStatus.DOWNLOADING_PACKAGE:
-        this.setState({ syncMessage: "下载更新中..." });
+        this.setState({ syncMessage: "Downloading package." });
         break;
       case CodePush.SyncStatus.AWAITING_USER_ACTION:
-        this.setState({ syncMessage: "等待用户动作中..." });
+        this.setState({ syncMessage: "Awaiting user action." });
         break;
       case CodePush.SyncStatus.INSTALLING_UPDATE:
-        this.setState({ syncMessage: "安装更新中..." });
+        this.setState({ syncMessage: "Installing update." });
         break;
       case CodePush.SyncStatus.UP_TO_DATE:
-        this.setState({ syncMessage: "已是最新版本.", progress: false });
+        this.setState({ syncMessage: "App up to date.", progress: false });
         break;
       case CodePush.SyncStatus.UPDATE_IGNORED:
-        this.setState({ syncMessage: "用户取消更新.", progress: false });
+        this.setState({ syncMessage: "Update cancelled by user.", progress: false });
         break;
       case CodePush.SyncStatus.UPDATE_INSTALLED:
         this.setState({ syncMessage: "Update installed and will be applied on restart.", progress: false });
         break;
       case CodePush.SyncStatus.UNKNOWN_ERROR:
-        this.setState({ syncMessage: "未知错误.", progress: false });
+        this.setState({ syncMessage: "An unknown error occurred.", progress: false });
         break;
     }
   }
 
   codePushDownloadDidProgress(progress) {
-    this.setState({ progress });
+            console.log("currProgress"+this.currProgress);
+                this.currProgress = parseFloat(
+                    progress.receivedBytes / progress.totalBytes
+                ).toFixed(2);
+                if (this.currProgress >= 1) {
+                    console.log("更新完成");
+                    this.setState({ modalVisible: false });
+                } else {
+                    console.log(this.refs.progressBar.progress);
+                    this.refs.progressBar.progress = this.currProgress;
+                }
   }
 
   toggleAllowRestart() {
@@ -121,6 +132,13 @@ class App extends Component<{}> {
           <Text style={styles.syncButton}>Press for Update Metadata!!!</Text>
         </TouchableOpacity>
         <Text style={styles.messages}>{this.state.syncMessage || ""}</Text>
+      <Progress ref="progressBar" progressColor={"#89C0FF"} style={{
+                                    marginTop: 20,
+                                    height: 10,
+                                    width:width - 100,
+                                    backgroundColor: "#5f8aff",
+                                    borderRadius: 10
+                                  }}/>
       </View>
     );
   }
