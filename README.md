@@ -142,10 +142,17 @@ react-native link react-native-code-push
 ### 3.4 修改app/src/main/res/values/strings.xml
 ```
 <resources>
-	<string moduleConfig="true" name="reactNativeCodePush_androidDeploymentKey">C3gO8yp8SJcc1KddLpuYhBueYRBi4ksvOXqog</string>
+	<string moduleConfig="true" name="reactNativeCodePush_androidDeploymentKey">YourDeploymentKey</string>
     <string moduleConfig="true" name="reactNativeCodePush_androidServerURL">https://域名(:端口)/</string>  <!-- 此行为添加内容 -->
     <string name="app_name">appName</string>
 </resources>
+```
+
+### 3.5 修改app/build.gradle
+```
+将defaultConfig下的versionName修改为三位版本号，例如:1.0.0
+
+注意：发布版本号相同时，才会检测到更新。即安装的是1.0.0版本，而发布到code-push-server上的是1.0.1版本时，是检测不到更新的。
 ```
 
 ## 4. 发布更新
