@@ -105,12 +105,30 @@ class App extends Component<{}> {
     if(!this.state.isSync){
       this.setState({isSync: true}, ()=>{
         CodePush.sync(
-          {},
+          {
+//            // 更新安装时间
+//            // CodePush.InstallMode.IMMEDIATE 立即安装并重启app
+//            // CodePush.InstallMode.ON_NEXT_RESTART 下次启动app时安装
+//            // CodePush.InstallMode.ON_NEXT_RESUME app从后台切换过来时安装
+//            installMode: CodePush.InstallMode.IMMEDIATE
+          },
           this.codePushStatusDidChange.bind(this),
           this.codePushDownloadDidProgress.bind(this)
         );
       });
     }
+  }
+
+  silentSync(){
+    this.setState({isSync: true}, ()=>{
+      CodePush.sync(
+        {},
+        this.codePushStatusDidChange.bind(this),
+        this.codePushDownloadDidProgress.bind(this)
+      );
+     });
+    }
+    CodePush.restartApp(true);
   }
 
   /** Update pops a confirmation dialog, and then immediately reboots the app */
@@ -128,18 +146,6 @@ class App extends Component<{}> {
        });
      }
    });
-//    this.setState({immediateUpdate: true});
-//    CodePush.sync(
-//      {
-//        // 更新安装时间
-//        // CodePush.InstallMode.IMMEDIATE 立即安装并重启app
-//        // CodePush.InstallMode.ON_NEXT_RESTART 下次启动app时安装
-//        // CodePush.InstallMode.ON_NEXT_RESUME app从后台切换过来时安装
-//        installMode: CodePush.InstallMode.IMMEDIATE
-//      },
-//      this.codePushStatusDidChange.bind(this),
-//      this.codePushDownloadDidProgress.bind(this)
-//    );
   }
 
   renderModal() {
@@ -226,7 +232,7 @@ class App extends Component<{}> {
         <Text style={styles.welcome}>
           Welcome to CodePush!
         </Text>
-        <TouchableOpacity onPress={this.sync.bind(this)}>
+        <TouchableOpacity onPress={this.silentSync.bind(this)}>
           <Text style={styles.syncButton}>后台更新</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={this.syncImmediate.bind(this)}>
