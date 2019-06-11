@@ -100,7 +100,7 @@ class App extends Component<{}> {
       });
   }
 
-  /** Update is downloaded silently, and applied on restart (recommended) */
+
   sync() {
     if(!this.state.isSync){
       this.setState({isSync: true}, ()=>{
@@ -119,6 +119,7 @@ class App extends Component<{}> {
     }
   }
 
+   /** Update is downloaded silently, and applied on restart (recommended) */
   silentSync(){
     this.setState({isSync: true}, ()=>{
       CodePush.sync(
