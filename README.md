@@ -219,3 +219,71 @@ react-native link react-native-code-push
         }
     }
 ```
+## 7. code-push常用命令
+```
+安装:
+npm install -g code-push-cli
+
+注册(微软服务器)账号:
+code-push register
+
+登陆:
+code-push login http://IP:Port
+
+注销:
+code-push logout
+
+添加项目:
+code-push app add [app名称]
+
+删除项目:
+code-push app remove [app名称]
+
+列出账号下的所有项目:
+code-push app list
+
+部署测试环境：
+code-push release-react <appName> android/ios -t 1.0.0 --des "更新描述"
+
+部署生产环境：
+code-push release-react <appName> android/ios -d Production -t 1.0.0 --des "更新描述"
+
+查看部署的历史版本信息:
+code-push deployment history <appName> <deploymentNmae>
+
+回滚：
+code-push rollback <appName> Production
+code-push rollback <appName> Production --targetRelease v4  回滚到v4版本
+
+修改更新:
+code-push patch MyApp Production --des "Updated description" -r 50         修改"MyApp"的"Production"部署中最新更新的描述 ，并且更新推送范围为50％
+code-push patch MyApp Production -l v3 --des "Updated description for v3"  修改"MyApp"的"Production"部署中标签为v3的更新的描述
+
+升级环境:
+code-push promote MyApp Staging Production                                   "MyApp"中"Staging"部署的最新更新发布到"Production"部署中
+code-push promote MyApp Staging Production --des "Production rollout" -r 25  "MyApp"中"Staging"部署的最新更新发布到"Production"部署中, 并且只推送25%的用户
+
+显示登陆的token:
+code-push access-key ls
+
+删除某个access-key:
+code-push access-key rm <accessKey>
+
+添加协作人员：
+code-push collaborator add <appName> next@126.com
+
+部署一个环境:
+code-push deployment add <appName> <deploymentName>
+
+删除部署:
+code-push deployment rm <appName>
+
+列出应用的部署:
+code-push deployment ls <appName>
+
+查询部署环境的key:
+code-push deployment ls <appName> -k
+
+重命名一个部署:
+code-push deployment rename <appName> <currentDeploymentName> <newDeploymentName>
+```
