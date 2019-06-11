@@ -129,7 +129,7 @@ class App extends Component<{}> {
       );
      });
     }
-    CodePush.restartApp(true);
+    CodePush.allowRestart();
   }
 
   /** Update pops a confirmation dialog, and then immediately reboots the app */
