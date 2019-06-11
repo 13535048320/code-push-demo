@@ -43,7 +43,7 @@ class App extends Component<{}> {
   codePushStatusDidChange(syncStatus) {
     switch(syncStatus) {
       case CodePush.SyncStatus.CHECKING_FOR_UPDATE:
-        this.setState({ modalVisible: true, syncMessage: "检测更新中..." });
+        this.setState({ syncMessage: "检测更新中..." });
         break;
       case CodePush.SyncStatus.DOWNLOADING_PACKAGE:
 //        this.setState({ syncMessage: "下载更新中..." });
@@ -174,7 +174,7 @@ class App extends Component<{}> {
                       }}>
                           {this.state.update ? <TouchableOpacity  onPress={()=>{
                               console.log('--------点击---------立即安装更新-----------');
-                              this.setState({modalVisible: false}, ()=>{
+                              this.setState({modalVisible: true}, ()=>{
                                   CodePush.restartApp(true);
                               })
                           }} style={{height: 40, width: 0.5 * SWidth}}>
