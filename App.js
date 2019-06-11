@@ -127,9 +127,9 @@ class App extends Component<{}> {
         this.codePushStatusDidChange.bind(this),
         this.codePushDownloadDidProgress.bind(this)
       );
+      CodePush.allowRestart();
      });
     }
-    CodePush.allowRestart();
   }
 
   /** Update pops a confirmation dialog, and then immediately reboots the app */
